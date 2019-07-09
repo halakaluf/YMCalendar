@@ -14,13 +14,22 @@ final class BasicViewController: UIViewController, UIPickerViewDelegate, UIPicke
 
     @IBOutlet weak var calendarWeekBarView: YMCalendarWeekBarView!
     @IBOutlet weak var calendarView: YMCalendarView!
-
+    
+    var datesTest : [Date] = []
+    var selectedColor: UIColor = .oceanblue
+    var selectedView = true
     let symbols = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     var calendar = Calendar.current
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        //date range
+        for i in 1..<10{
+            datesTest.append(makeDate(year: 2019, month: 7, day: i))
+        }
+        
+        calendarView.selectedViewDays = datesTest
+        
         /// WeekBarView
         calendarWeekBarView.appearance = self
         calendarWeekBarView.calendar = calendar
@@ -47,6 +56,15 @@ final class BasicViewController: UIViewController, UIPickerViewDelegate, UIPicke
 
     @IBAction func allowsMultipleSelectSwitchChanged(_ sender: UISwitch) {
         calendarView.allowsMultipleSelection = sender.isOn
+    }
+    
+    private func makeDate(year: Int, month: Int, day: Int) -> Date {
+        let dateComponents = DateComponents(year: year, month: month, day: day)
+        guard let date = Calendar.current.date(from: dateComponents) else {
+            assertionFailure("can`t crate Date")
+            return Date.distantPast
+        }
+        return date
     }
 
     // firstWeekday picker
@@ -111,6 +129,13 @@ extension BasicViewController: YMCalendarDelegate {
         let formatter = DateFormatter()
         formatter.dateFormat = "YYYY-MM-dd"
         navigationItem.title = formatter.string(from: date)
+        selectedView = false
+        calendarView.reload()
+    }
+    
+    func calendarView(_ view: YMCalendarView, didDeselectDayCellAtDate date: Date) {
+        selectedView = true
+        calendarView.reload()
     }
 
     func calendarView(_ view: YMCalendarView, didMoveMonthOfStartDate date: Date) {
@@ -194,5 +219,11 @@ extension BasicViewController: YMCalendarAppearance {
 
     func calendarViewAppearance(_ view: YMCalendarView, dayLabelSelectedBackgroundColorAtDate date: Date) -> UIColor {
         return .deeppink
+    }
+    func calendarViewAppearance(_ view: YMCalendarView, daySelectedBackgroundColorAtDate date: Date) -> UIColor {
+        if datesTest.contains(date){
+            return selectedView ? .oceanblue : .clear
+        }
+        return .clear
     }
 }

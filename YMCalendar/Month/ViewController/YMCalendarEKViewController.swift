@@ -103,7 +103,7 @@ open class YMCalendarEKViewController: YMCalendarViewController {
         bgQueue.async { [weak self] in
             loadMonths.forEach {
                 self?.loadMonth($0)
-                if let idx = self?.queueToLoad.index(of: $0) {
+                if let idx = self?.queueToLoad.firstIndex(of: $0) {
                     self?.queueToLoad.remove(at: idx)
                 }
             }

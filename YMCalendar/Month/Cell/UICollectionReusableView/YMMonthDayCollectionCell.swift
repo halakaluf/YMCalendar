@@ -11,7 +11,16 @@ import UIKit
 
 final class YMMonthDayCollectionCell: UICollectionViewCell {
     typealias YMMonthDayAnimationCompletion = (Bool) -> Void
-
+    
+    let viewSelected = UIView()
+    
+    var selectedDayColor: UIColor = .clear {
+        didSet{
+            viewSelected.backgroundColor = selectedDayColor
+        }
+    }
+    var viewSelectedPosition: SelectionRangePosition = .none
+    
     let dayLabel = UILabel()
 
     var dayLabelColor: UIColor = .black {
@@ -52,6 +61,7 @@ final class YMMonthDayCollectionCell: UICollectionViewCell {
     }
 
     private func setup() {
+        contentView.addSubview(viewSelected)
         backgroundColor = .clear
 
         dayLabel.numberOfLines = 1
@@ -83,6 +93,7 @@ final class YMMonthDayCollectionCell: UICollectionViewCell {
         }
         dayLabel.frame = CGRect(x: x, y: dayLabelMargin, width: dayLabelHeight, height: dayLabelHeight)
         dayLabel.layer.cornerRadius = dayLabelHeight / 2
+        handleSelectedView(x)
     }
 
     public func select(withAnimation animation: YMSelectAnimation, completion: YMMonthDayAnimationCompletion? = nil) {
@@ -104,6 +115,30 @@ final class YMMonthDayCollectionCell: UICollectionViewCell {
             animationWithBounce(false, completion: completion)
         case .fade:
             animationWithFade(false, completion: completion)
+        }
+    }
+    
+    private func handleSelectedView(_ x: CGFloat){
+        switch viewSelectedPosition {
+        case .left:
+            let widthView = (self.frame.width/2) + (dayLabelHeight/2)
+            viewSelected.frame = CGRect(x: x, y: dayLabelMargin, width:widthView , height: dayLabelHeight)
+            viewSelected.layer.cornerRadius = viewSelected.frame.height/2
+            viewSelected.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMinXMinYCorner]
+        case .middle:
+            viewSelected.frame = CGRect(x: 0, y: dayLabelMargin, width:self.frame.width , height: dayLabelHeight)
+            viewSelected.layer.cornerRadius = 0
+            viewSelected.layer.maskedCorners = []
+        case .right:
+            let widthView = (self.frame.width/2) + (dayLabelHeight/2)
+            viewSelected.frame = CGRect(x: 0, y: dayLabelMargin, width:widthView , height: dayLabelHeight)
+            viewSelected.layer.cornerRadius = viewSelected.frame.height/2
+            viewSelected.layer.maskedCorners = [.layerMaxXMaxYCorner, .layerMaxXMinYCorner]
+        case .full:
+            viewSelected.frame = CGRect(x: x, y: dayLabelMargin, width:dayLabelHeight , height: dayLabelHeight)
+            viewSelected.layer.cornerRadius = viewSelected.frame.height/2
+            viewSelected.layer.maskedCorners = [.layerMaxXMaxYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMinXMinYCorner]
+        case .none: break
         }
     }
 

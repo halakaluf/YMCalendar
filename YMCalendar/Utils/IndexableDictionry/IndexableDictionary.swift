@@ -65,7 +65,7 @@ public struct IndexableDictionary<Key: Hashable, Value>: RandomAccessCollection,
     public var endIndex: Index { return _elements.endIndex }
 
     public func index(forKey key: Key) -> Index? {
-        return _elements.index(where: {$0.0 == key})
+        return _elements.firstIndex(where: {$0.0 == key})
     }
 
     // MARK: - Range Replace

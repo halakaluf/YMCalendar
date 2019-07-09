@@ -134,6 +134,17 @@ final public class YMCalendarView: UIView, YMCalendarAppearance {
             }
         }
     }
+    
+    public var selectedViewDays: [Date] = []{
+        didSet{
+            for date in selectedViewDays{
+                selectedViewDaysIndex.append(indexPathForDate(date)!)
+            }
+            print("index")
+            print(selectedViewDaysIndex)
+        }
+    }
+    private var selectedViewDaysIndex: [IndexPath] = []
 
     private var selectedIndexes: [IndexPath] = []
 
@@ -295,6 +306,25 @@ extension YMCalendarView {
     public func reload() {
         clearRowsCacheIn(range: nil)
         collectionView.reloadData()
+    }
+    
+    public func selectedViewPosition(index: IndexPath) -> SelectionRangePosition {
+        print("selected position")
+        print("index: \(index)")
+        if selectedViewDaysIndex.isEmpty{print("none")
+            return .none
+        }
+        if selectedViewDaysIndex.count == 1 && selectedViewDaysIndex.contains(index){print("full")
+            return .full
+        }else if let first = selectedViewDaysIndex.first, first == index{print("left")
+            return .left
+        }else if let last = selectedViewDaysIndex.last, last == index{print("right")
+            return .right
+        }else if selectedViewDaysIndex.contains(index){print("middle")
+            return .middle
+        }else{print("none")
+            return .none
+        }
     }
 }
 
@@ -584,6 +614,8 @@ extension YMCalendarView: UICollectionViewDataSource {
         cell.dayLabelBackgroundColor = appearance.calendarViewAppearance(self, dayLabelBackgroundColorAtDate: date)
         cell.dayLabelSelectedColor = appearance.calendarViewAppearance(self, dayLabelSelectedTextColorAtDate: date)
         cell.dayLabelSelectedBackgroundColor = appearance.calendarViewAppearance(self, dayLabelSelectedBackgroundColorAtDate: date)
+        cell.selectedDayColor = appearance.calendarViewAppearance(self, daySelectedBackgroundColorAtDate: date)
+        cell.viewSelectedPosition = selectedViewPosition(index: indexPath)
         cell.dayLabelHeight = dayLabelHeight
 
         // select cells which already selected dates
@@ -715,7 +747,7 @@ extension YMCalendarView: UICollectionViewDelegate {
 
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if allowsMultipleSelection {
-            if let i = selectedIndexes.index(of: indexPath) {
+            if let i = selectedIndexes.firstIndex(of: indexPath) {
                 cellForItem(at: indexPath)?.deselect(withAnimation: deselectAnimation)
                 selectedIndexes.remove(at: i)
             } else {
@@ -726,13 +758,18 @@ extension YMCalendarView: UICollectionViewDelegate {
             selectedIndexes.forEach {
                 cellForItem(at: $0)?.deselect(withAnimation: deselectAnimation)
             }
-            cellForItem(at: indexPath)?.select(withAnimation: selectAnimation)
-            selectedIndexes = [indexPath]
+            if selectedIndexes.contains(indexPath){
+                selectedIndexes.removeLast()
+                delegate?.calendarView?(self, didDeselectDayCellAtDate: dateAt(indexPath))
+            }else{
+                cellForItem(at: indexPath)?.select(withAnimation: selectAnimation)
+                selectedIndexes = [indexPath]
+            }
         }
 
         delegate?.calendarView?(self, didSelectDayCellAtDate: dateAt(indexPath))
     }
-
+    
     // MARK: - UIScrollViewDelegate
 
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
