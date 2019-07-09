@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.author             = { "Yuma Matsune" => "yuma.matsune@gmail.com" }
   s.social_media_url   = "https://twitter.com/matsune_ver3"
   s.source             = { :git => "https://github.com/matsune/YMCalendar.git", :tag => s.version.to_s }
-  s.platform     = :ios, "8.0"
+  s.platform     = :ios, "11.0"
 
   s.source_files  = "YMCalendar/**/*.swift"
 end
