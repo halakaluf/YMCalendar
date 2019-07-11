@@ -28,7 +28,7 @@ final class BasicViewController: UIViewController, UIPickerViewDelegate, UIPicke
             datesTest.append(makeDate(year: 2019, month: 7, day: i))
         }
         
-        calendarView.selectedViewDays = datesTest
+//        calendarView.selectedViewDays = datesTest
         
         /// WeekBarView
         calendarWeekBarView.appearance = self
@@ -45,7 +45,7 @@ final class BasicViewController: UIViewController, UIPickerViewDelegate, UIPicke
         // Month calendar settings
         calendarView.calendar = calendar
         calendarView.backgroundColor = .dark
-        calendarView.scrollDirection = .vertical
+        calendarView.scrollDirection = .horizontal
         calendarView.isPagingEnabled = true
 
         // Events settings
@@ -68,7 +68,6 @@ final class BasicViewController: UIViewController, UIPickerViewDelegate, UIPicke
     }
 
     // firstWeekday picker
-
     func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
         return 7
     }
@@ -129,12 +128,10 @@ extension BasicViewController: YMCalendarDelegate {
         let formatter = DateFormatter()
         formatter.dateFormat = "YYYY-MM-dd"
         navigationItem.title = formatter.string(from: date)
-        selectedView = false
         calendarView.reload()
     }
     
     func calendarView(_ view: YMCalendarView, didDeselectDayCellAtDate date: Date) {
-        selectedView = true
         calendarView.reload()
     }
 
@@ -225,5 +222,23 @@ extension BasicViewController: YMCalendarAppearance {
             return selectedView ? .oceanblue : .clear
         }
         return .clear
+    }
+    
+    func calendarViewPosition(_ view: YMCalendarView, date: Date) -> SelectionRangePosition {
+        
+        if datesTest.isEmpty{
+            return .none
+        }
+        if datesTest.count == 1 && datesTest.contains(date){
+            return .full
+        }else if let first = datesTest.first, first == date{
+            return .left
+        }else if let last = datesTest.last, last == date{
+            return .right
+        }else if datesTest.contains(date){
+            return .middle
+        }else{
+            return .none
+        }
     }
 }
