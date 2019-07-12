@@ -14,6 +14,9 @@ import EventKit
 public protocol YMCalendarDelegate: class {
     @objc optional func calendarViewDidScroll(_ view: YMCalendarView)
     @objc optional func calendarView(_ view: YMCalendarView, didSelectDayCellAtDate date: Date)
+    @objc optional func calendarView(_ view: YMCalendarView, didDeselectDayCellAtDate date: Date)
     @objc optional func calendarView(_ view: YMCalendarView, didMoveMonthOfStartDate date: Date)
     @objc optional func calendarView(_ view: YMCalendarView, didSelectEventAtIndex index: Int, date: Date)
+    @objc optional func calendarView(_ view: YMCalendarView, shouldSelectEventAtIndex index: Int, date: Date) -> Bool
+    @objc optional func calendarView(_ view: YMCalendarView, didDeselectEventAtIndex index: Int, date: Date)
 }

@@ -14,4 +14,6 @@ protocol YMEventsRowViewDelegate: UIScrollViewDelegate {
     func eventsRowView(_ view: YMEventsRowView, rangeForEventAtIndexPath indexPath: IndexPath) -> NSRange
     func eventsRowView(_ view: YMEventsRowView, didSelectCellAtIndexPath indexPath: IndexPath)
     func eventsRowView(_ view: YMEventsRowView, cellForEventAtIndexPath indexPath: IndexPath) -> YMEventView
+    func eventsRowView(_ view: YMEventsRowView, shouldSelectCellAtIndexPath indexPath: IndexPath) -> Bool
+    func eventsRowView(_ view: YMEventsRowView, didDeselectCellAtIndexPath  indexPath: IndexPath)
 }
