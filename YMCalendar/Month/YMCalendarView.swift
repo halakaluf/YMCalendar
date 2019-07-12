@@ -792,6 +792,10 @@ extension YMCalendarView: UICollectionViewDelegate {
     private func cellForItem(at indexPath: IndexPath) -> YMMonthDayCollectionCell? {
         return collectionView.cellForItem(at: indexPath) as? YMMonthDayCollectionCell
     }
+    
+    public func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
+        return delegate?.calendarView?(self, shouldSelectEventAtIndex: indexPath.row, date: dateAt(indexPath)) ?? false
+    }
 
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if allowsMultipleSelection {
