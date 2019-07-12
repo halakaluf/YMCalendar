@@ -128,12 +128,37 @@ final public class YMCalendarView: UIView, YMCalendarAppearance {
     public var monthRange: MonthRange? {
         didSet {
             if let range = monthRange {
-                startDate = range.start
+              //  startDate = range.start
             } else {
                 startDate = monthDate(from: Date())
             }
         }
     }
+    
+    public var currentOffset:CGPoint = CGPoint(x: 0, y: 0)
+    public var currentMonth = 0
+    private var firstTime = true
+    
+    public var selectedViewDays: [Date] = []{
+        didSet{
+            for date in selectedViewDays{
+                selectedViewDaysIndex.append(indexPathForDate(date)!)
+            }
+//            print("date")
+//            print(selectedViewDays)
+        }
+    }
+    
+    private var visibleViewDays: [Date] {
+        guard let visibleRange = visibleDays else {
+            return []
+        }
+        return selectedViewDays
+            .filter {
+                visibleRange.contains(date: $0)
+            }
+    }
+    private var selectedViewDaysIndex: [IndexPath] = []
 
     private var selectedIndexes: [IndexPath] = []
 
@@ -219,10 +244,12 @@ final public class YMCalendarView: UIView, YMCalendarAppearance {
         super.init(coder: aDecoder)
         commonInit()
     }
-
+    
     private func commonInit() {
         backgroundColor = .white
         addSubview(collectionView)
+        currentMonth = calendar.month(Date()) - 1
+        print("current month \(currentMonth)")
     }
 
     private func createCollectionView() -> UICollectionView {
@@ -296,6 +323,30 @@ extension YMCalendarView {
         clearRowsCacheIn(range: nil)
         collectionView.reloadData()
     }
+
+//    public func selectedViewPosition(index: IndexPath) -> SelectionRangePosition {
+//        let date = dateAt(index)
+//        let lessMonth = firstTime ? 6 : 1
+//        let indexDate = IndexPath(row: index.row , section: currentMonth - lessMonth)
+//        let date = dateAt(index)
+////        print("index: \(index)")
+//        print("date \(date)")
+
+//        if selectedViewDaysIndex.isEmpty{
+//            return .none
+//        }
+//        if selectedViewDays.count == 1 && selectedViewDays.contains(date){
+//            return .full
+//        }else if let first = selectedViewDays.first, first == date{
+//            return .left
+//        }else if let last = selectedViewDays.last, last == date{
+//            return .right
+//        }else if selectedViewDays.contains(date){
+//            return .middle
+//        }else{
+//            return .none
+//        }
+//    }
 }
 
 extension YMCalendarView {
@@ -584,6 +635,8 @@ extension YMCalendarView: UICollectionViewDataSource {
         cell.dayLabelBackgroundColor = appearance.calendarViewAppearance(self, dayLabelBackgroundColorAtDate: date)
         cell.dayLabelSelectedColor = appearance.calendarViewAppearance(self, dayLabelSelectedTextColorAtDate: date)
         cell.dayLabelSelectedBackgroundColor = appearance.calendarViewAppearance(self, dayLabelSelectedBackgroundColorAtDate: date)
+        cell.selectedDayColor = appearance.calendarViewAppearance(self, daySelectedBackgroundColorAtDate: date)
+        cell.viewSelectedPosition = appearance.calendarViewPosition(self, date: date)
         cell.dayLabelHeight = dayLabelHeight
 
         // select cells which already selected dates
@@ -742,7 +795,7 @@ extension YMCalendarView: UICollectionViewDelegate {
 
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if allowsMultipleSelection {
-            if let i = selectedIndexes.index(of: indexPath) {
+            if let i = selectedIndexes.firstIndex(of: indexPath) {
                 cellForItem(at: indexPath)?.deselect(withAnimation: deselectAnimation)
                 selectedIndexes.remove(at: i)
             } else {
@@ -753,18 +806,87 @@ extension YMCalendarView: UICollectionViewDelegate {
             selectedIndexes.forEach {
                 cellForItem(at: $0)?.deselect(withAnimation: deselectAnimation)
             }
-            cellForItem(at: indexPath)?.select(withAnimation: selectAnimation)
-            selectedIndexes = [indexPath]
+            if selectedIndexes.contains(indexPath){
+                selectedIndexes.removeLast()
+                delegate?.calendarView?(self, didDeselectDayCellAtDate: dateAt(indexPath))
+            }else{
+                cellForItem(at: indexPath)?.select(withAnimation: selectAnimation)
+                selectedIndexes = [indexPath]
+            }
         }
 
         delegate?.calendarView?(self, didSelectDayCellAtDate: dateAt(indexPath))
     }
-
+    
+    func calcOffset(_ positive: Bool) -> CGFloat{
+        switch scrollDirection {
+        case .horizontal:
+            if Int(collectionView.contentOffset.x) >= Int(collectionView.bounds.width * 7) {
+                return collectionView.bounds.width * 4
+            }
+            if Int(collectionView.contentOffset.x) <= Int(collectionView.bounds.width){
+                return collectionView.bounds.width * 5
+            }
+            return positive ? currentOffset.x + collectionView.bounds.width : currentOffset.x - collectionView.bounds.width
+        case .vertical:
+            if Int(collectionView.contentOffset.y) >= Int(collectionView.bounds.height * 7) {
+                return collectionView.bounds.height * 4
+            }
+            if Int(collectionView.contentOffset.y) <= Int(collectionView.bounds.height){
+                return collectionView.bounds.height * 5
+            }
+            return positive ? currentOffset.y + collectionView.bounds.height : currentOffset.y - collectionView.bounds.height
+        }
+    }
+    
+    func findCurrentMonth(){
+        firstTime = false
+        switch scrollDirection {
+        case .horizontal:
+            if currentOffset == CGPoint(x: 0, y: 0) {
+                currentOffset = CGPoint(x: collectionView.bounds.width * 4, y: 0)
+            }
+//            print("scrollView contentOffset \(collectionView.contentOffset)")
+//            print("current offset \(currentOffset)")
+//            print("collection offset \(collectionView.contentOffset)")
+            
+            if (collectionView.contentOffset.x >= (currentOffset.x + collectionView.bounds.width)) || (collectionView.contentOffset.x <= (currentOffset.x - collectionView.bounds.width)){
+                if (currentOffset.x < collectionView.contentOffset.x){
+                    currentMonth = (currentMonth + 1 + 12)%12
+                    currentOffset = CGPoint(x: calcOffset(true), y: 0)
+                }else{
+                    currentMonth = (currentMonth - 1 + 12)%12
+                    currentOffset = CGPoint(x: calcOffset(false), y: 0)
+                }
+            }
+//            print("current month \(currentMonth)")
+        case .vertical:
+            if currentOffset == CGPoint(x: 0, y: 0) {
+                currentOffset = CGPoint(x: 0, y: collectionView.bounds.height * 4)
+            }
+//            print("scrollView contentOffset \(collectionView.contentOffset)")
+//            print("current offset \(currentOffset)")
+//            print("collection offset \(collectionView.contentOffset)")
+            
+            if (collectionView.contentOffset.y >= (currentOffset.y + collectionView.bounds.height)) || (collectionView.contentOffset.y <= (currentOffset.y - collectionView.bounds.height)){
+                if (currentOffset.y < collectionView.contentOffset.y){
+                    currentMonth = (currentMonth + 1 + 12)%12
+                    currentOffset = CGPoint(x: 0, y: calcOffset(true))
+                }else{
+                    currentMonth = (currentMonth - 1 + 12)%12
+                    currentOffset = CGPoint(x: 0, y: calcOffset(false))
+                }
+            }
+//            print("current month \(currentMonth)")
+        }
+    }
+    
     // MARK: - UIScrollViewDelegate
 
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
         recenterIfNeeded()
-
+        findCurrentMonth()
+       
         if let indexPath = collectionView.indexPathForItem(at: center) {
             let date = dateAt(indexPath)
             let startMonth = calendar.startOfMonthForDate(date)
